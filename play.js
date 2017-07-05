@@ -16,4 +16,3 @@ var connect = player.connect(pingPong);
 setInterval(function() {
 	player.scrub(Tone.Time(Math.random(10)*3)+1);
 }, 400)
-
