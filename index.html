@@ -2,15 +2,31 @@
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
-	<title></title>
+	<title>empath</title>
+	<style type="text/css">
+	body {
+		font-family: monospace;
+		color: #444;
+	}
+
+	#main {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translateX(-50%) translateY(-50%);
+	}
+	</style>
 </head>
 <body>
+<div id="main">empath</div>
+<div><span id="seconds"></span> seconds</div>
+<div><span id="beats"></span></div>
 
 <script src="https://tonejs.github.io/build/Tone.min.js"></script>
 <script src="play.js"></script>
 <script>
-  document.write('<script src="http://' + (location.host || 'localhost').split(':')[0] +
-  ':35729/livereload.js?snipver=1"></' + 'script>')
+	document.write('<script src="http://' + (location.host || 'localhost').split(':')[0] +
+	':35729/livereload.js?snipver=1"></' + 'script>');
 </script>
 </body>
 </html>

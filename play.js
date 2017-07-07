@@ -45,6 +45,16 @@ var ianVoices = new Tone.Buffers({
 	"ian13" : "./audio/ian/ian13.mp3"
 });
 
+function updateTimeDisplay() {
+	requestAnimationFrame(updateTimeDisplay);
+	//the time elapsed in seconds
+	document.querySelector('#seconds').textContent = Tone.Transport.seconds.toFixed(2);
+	document.querySelector('#beats').textContent = Tone.Transport.position;
+}
+
+Tone.Transport.loopEnd = '4m';
+Tone.Transport.loop = true;
+Tone.Transport.bpm.value = 120.0;
 
 var ch1Grain = {};
 var ch2Conv = {};
@@ -52,13 +62,13 @@ var ch2Conv = {};
 var ch = [{}, {}, {}, {}];
 
 ch[1].grainSrc = new Tone.GrainPlayer({
-			"url" : "./audio/empath.mp3",
-			"loop" : true,
-			"grainSize" : 0.2,
-			"overlap" : 0.001,
-			"drift" : 10,
-			"playbackRate" : 0.5,
-		});
+	"url" : "./audio/empath.mp3",
+	"loop" : true,
+	"grainSize" : 0.2,
+	"overlap" : 0.001,
+	"drift" : 10,
+	"playbackRate" : 0.5,
+});
 
 //channel 1
 ch[1].pingPong = new Tone.PingPongDelay(0.3, 0.4);
@@ -71,7 +81,7 @@ ch[2].playerSrc = new Tone.Player({
 			"retrigger" : true,
 			"playbackRate" : 1
 		});
-ch[2].vol = new Tone.Volume(-10);
+ch[2].vol = new Tone.Volume(-20);
 ch[2].convolver = new Tone.Convolver("./audio/impulse.wav");
 
 ch[2].playerSrc.chain(ch[2].vol, ch[2].convolver, Tone.Master);
@@ -87,18 +97,9 @@ ch[3].vol = new Tone.Volume(-4);
 ch[3].textureSrc.chain(ch[3].vol, Tone.Master);
 //ch[3].vol.mute = true;
 
-
-
-
-
 //function reBuffer(){
-
-
-	
-	//ch[2].playerSrc.buffer = evanVoices.get("evan" + evanVoxNum);
-
-
-//} 
+//	  ch[2].playerSrc.buffer = evanVoices.get("evan" + evanVoxNum);
+//}
 
 var voxNum;
 function playVoice(time){
@@ -109,10 +110,6 @@ function playVoice(time){
 	ch[3].textureSrc.start(time, voxNum);
 }
 
-
-
-
-
 var loop = new Tone.Loop(function(time){
 	ch[1].grainSrc.scrub(Tone.Time(Math.random()*3)+1);
 }, 0.4 ).start(0);
@@ -121,15 +118,63 @@ var loop2 = new Tone.Loop(function(time){
 	playVoice("+0.3");
 }, 0.9 ).start(0);
 
+var ambientSynth = new Tone.PolySynth(6, Tone.Synth, {
+	"oscillator" : {
+		"type": "sine"
+	},
+	"envelope": {
+		"attack": 4,
+		"decay": 1,
+		"sustain": 0.5,
+		"release": 5
+	}
+});
 
+var lfo = new Tone.LFO("1m", -30, 30);
+lfo.connect(ambientSynth.detune);
+lfo.start();
 
-Tone.Transport.start("+1");
+var pitchShift = new Tone.PitchShift(7).toMaster();
+pitchShift.wet = 0.3;
+pitchShift.feedback = 0.5;
 
+var synthPingPong = new Tone.PingPongDelay(.4, 0.7).toMaster();
 
+ambientSynth.chain(pitchShift, synthPingPong, Tone.Master);
 
+var getJSON = function(url, callback) {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.responseType = 'json';
+    xhr.onload = function() {
+      var status = xhr.status;
+      if (status == 200) {
+        callback(null, xhr.response);
+      } else {
+        callback(status);
+      }
+    };
+    xhr.send();
+};
 
-/*
-setInterval(function() {
-	player.scrub(Tone.Time(Math.random(10)*3)+1);
-}, 400);
-*/
+getJSON('seq1.json',
+function(err, data) {
+  if (err != null) {
+  	throw err;
+  } else {
+    var midi = data;
+    var midiPart = new Tone.Part(function(time, note) {
+	    //use the events to play the synth
+	    ambientSynth.triggerAttackRelease(note.name, note.duration, time, note.velocity);
+	}, midi.tracks[0].notes).start();
+  }
+});
+
+var loop = new Tone.Loop(function(time){
+	player.scrub(Tone.Time(Math.random(10)*3));
+}, .4);
+
+// loop.start(0);
+
+Tone.Transport.start('+1');
+updateTimeDisplay();
